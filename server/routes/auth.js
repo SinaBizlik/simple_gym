@@ -1,0 +1,78 @@
+const router = require('express').Router();
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// KAYIT OL (Register)
+router.post('/register', async (req, res) => {
+    try {
+        const { username, password, role, expertise } = req.body;
+        
+        // Kullanıcı zaten var mı?
+        const existingUser = await User.findOne({ username });
+        if (existingUser) return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış." });
+
+        // Şifrele
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Yeni kullanıcı oluştur
+        const newUser = new User({
+            username,
+            password: hashedPassword,
+            role,
+            expertise: role === 'trainer' ? expertise : undefined
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: "Kayıt başarılı!" });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GİRİŞ YAP (Login) - SORUNLU KISIM BURASIYDI, DÜZELTİLDİ ✅
+router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        console.log("--- GİRİŞ İSTEĞİ GELDİ ---");
+        console.log("Aranan Kullanıcı:", username);
+
+        // 1. Kullanıcıyı Bul
+        const user = await User.findOne({ username });
+        if (!user) {
+            console.log("❌ Kullanıcı Bulunamadı!");
+            return res.status(400).json({ error: "Kullanıcı adı hatalı" });
+        }
+
+        // 2. Şifreyi Kontrol Et
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            console.log("❌ Şifre Yanlış!");
+            return res.status(400).json({ error: "Şifre hatalı" });
+        }
+
+        console.log("✅ Giriş Başarılı! Token üretiliyor...");
+
+        // 3. Token Oluştur
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // 4. CEVABI GÖNDER (İşte burası eksikti veya çalışmıyordu)
+        res.json({
+            token,
+            role: user.role,
+            id: user._id,
+            expertise: user.expertise,
+            username: user.username
+        });
+        
+        console.log("📤 Cevap Frontend'e gönderildi.");
+
+    } catch (err) {
+        console.error("💥 Sunucu Hatası:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+module.exports = router;

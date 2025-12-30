@@ -1,29 +1,167 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
-    return (
-        <nav className="navbar">
-            <div className="nav-container">
-                {/* Logo */}
-                <Link to="/" className="logo">SIMPLE<span style={{color:'#D31145'}}>GYM</span></Link>
-                
-                {/* Menü Linkleri */}
-                <ul className="nav-links">
-                    <li><Link to="/">Kulüpler & Dersler</Link></li>
-                    <li><Link to="/contact">Iletişim</Link></li> 
-                    <li><Link to="/admin">Yönetim Paneli</Link></li>
-                    <li>
-    {/* Linki "/add-trainer" yerine "/join" olarak değiştirdik */}
-    <Link to="/join" className="btn-red">
-        BİZE KATIL
-    </Link>
-</li>
-                    
-                </ul>
+  const navigate = useNavigate();
+  
+  // LocalStorage'dan verileri al
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role'); // 'admin', 'trainer', 'user' (veya 'member')
+  const username = localStorage.getItem('username');
+
+  // Çıkış Yapma Fonksiyonu
+  const handleLogout = () => {
+    localStorage.clear(); // Tüm verileri temizle
+    alert('Başarıyla çıkış yapıldı.');
+    navigate('/login');
+    window.location.reload(); // Navbar'ın güncellenmesi için sayfayı yenile
+  };
+
+  return (
+    <nav className="navbar">
+      <div className="container navbar-container">
+        {/* LOGO */}
+        <Link to="/" className="logo">
+          SIMPLE<span style={{ color: '#D31145' }}>GYM</span>
+        </Link>
+
+        {/* MENÜ LİNKLERİ */}
+        <ul className="nav-links">
+          <li><Link to="/">ANA SAYFA</Link></li>
+          
+          {/* HERKESİN GÖREBİLECEĞİ ORTAK SAYFALAR */}
+          {!role && <li><Link to="/contact">İLETİŞİM</Link></li>}
+
+          {/* --- ADMIN ÖZEL --- */}
+          {role === 'admin' && (
+            <li><Link to="/admin" style={{ color: '#D31145', fontWeight: 'bold' }}>YÖNETİCİ PANELİ</Link></li>
+          )}
+
+          {/* --- HOCA (TRAINER) ÖZEL --- */}
+          {role === 'trainer' && (
+            <>
+              <li><Link to="/add-course">DERS EKLE</Link></li>
+              <li>
+                <Link to="/trainer-requests" style={{ color: '#ffc107', fontWeight: 'bold' }}>
+                  TALEPLER
+                </Link>
+              </li>
+            </>
+          )}
+
+          {(role === 'member' || role === 'user') && (
+            <>
+                <li>
+                    <Link to="/request" style={{ color: '#333', fontWeight: 'bold' }}>
+                        DERS İSTE
+                    </Link>
+                </li>
+                <li>
+                    <Link to="/my-requests" style={{ color: '#D31145', fontWeight: 'bold' }}>
+                        TALEPLERİM
+                    </Link>
+                </li>
+            </>
+          )}
+        </ul>
+
+        {/* SAĞ TARAFTAKİ BUTONLAR (Giriş/Çıkış) */}
+        <div className="auth-buttons">
+          {token ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
+                {username?.toUpperCase()} <small style={{color:'#666', fontWeight:'normal'}}>({role})</small>
+              </span>
+              <button onClick={handleLogout} className="btn-outline">
+                ÇIKIŞ YAP
+              </button>
             </div>
-        </nav>
-    );
+          ) : (
+            <>
+              <Link to="/login" style={{ marginRight: '10px', textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>
+                ÜYE GİRİŞİ
+              </Link>
+              <Link to="/register" className="btn-red">
+                KAYIT OL
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* CSS STİLLERİ */}
+      <style>{`
+        .navbar {
+          background-color: white;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          padding: 15px 0;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+        }
+        .navbar-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        .logo {
+          font-family: 'Oswald', sans-serif;
+          font-size: 28px;
+          font-weight: bold;
+          color: black;
+          text-decoration: none;
+          letter-spacing: 1px;
+        }
+        .nav-links {
+          list-style: none;
+          display: flex;
+          gap: 25px;
+          margin: 0;
+          padding: 0;
+        }
+        .nav-links li a {
+          text-decoration: none;
+          color: #333;
+          font-weight: 600;
+          font-size: 14px;
+          transition: color 0.3s;
+          text-transform: uppercase;
+        }
+        .nav-links li a:hover {
+          color: #D31145;
+        }
+        .btn-red {
+          background-color: #D31145;
+          color: white;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 5px;
+          font-weight: bold;
+          font-size: 14px;
+          transition: background 0.3s;
+        }
+        .btn-red:hover {
+          background-color: #a00d35;
+        }
+        .btn-outline {
+          background: transparent;
+          border: 1px solid #D31145;
+          color: #D31145;
+          padding: 8px 15px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-weight: bold;
+        }
+        .btn-outline:hover {
+          background: #D31145;
+          color: white;
+        }
+      `}</style>
+    </nav>
+  );
 };
 
 export default Navbar;

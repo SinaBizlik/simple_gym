@@ -2,57 +2,140 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const RoleSelection = () => {
-    return (
-        <div className="container" style={{ textAlign: 'center', padding: '50px 20px' }}>
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.heading}>ARAMIZA NASIL KATILMAK İSTERSİN?</h2>
+      
+      <div style={styles.cardsWrapper}>
+        
+        {/* --- SPORCU KARTI (SİYAH TASARIM) --- */}
+        <Link to="/register-member" style={styles.cardLink}>
+          <div style={styles.card}>
+            {/* Arka Plan Resmi */}
+            <div style={{
+              ...styles.bgImage, 
+              backgroundImage: 'url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=1000")'
+            }}></div>
             
-            <h1 className="page-title">ARAMIZA NASIL KATILMAK İSTERSİN?</h1>
-            <p style={{ color: '#666', marginBottom: '50px', fontSize: '1.2rem' }}>
-                Kendine uygun olan seçeneği işaretle ve spor yolculuğuna başla.
-            </p>
-
-            <div className="card-grid" style={{ maxWidth: '900px', margin: '0 auto' }}>
-                
-                {/* --- SEÇENEK 1: ÜYE (MEMBER) --- */}
-                <div className="card role-card">
-                    <img 
-                        src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop" 
-                        alt="Üye Ol" 
-                        className="card-image"
-                        style={{ height: '300px' }}
-                    />
-                    <div className="card-content" style={{ padding: '30px' }}>
-                        <h2 style={{ marginBottom: '15px' }}>SPORCUYUM</h2>
-                        <p style={{ marginBottom: '20px', color: '#555' }}>
-                            Derslere katılmak, antrenman yapmak ve form tutmak istiyorum.
-                        </p>
-                        <Link to="/register-member" className="btn-red" style={{ display: 'inline-block', width: '100%' }}>
-    ÜYE OL
-</Link>
-                    </div>
-                </div>
-
-                {/* --- SEÇENEK 2: EĞİTMEN (TRAINER) --- */}
-                <div className="card role-card">
-                    <img 
-                        src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1470&auto=format&fit=crop" 
-                        alt="Eğitmen Ol" 
-                        className="card-image"
-                        style={{ height: '300px' }}
-                    />
-                    <div className="card-content" style={{ padding: '30px' }}>
-                        <h2 style={{ marginBottom: '15px' }}>EĞİTMENİM</h2>
-                        <p style={{ marginBottom: '20px', color: '#555' }}>
-                            Ders vermek, öğrencileri koçluk yapmak ve ekibe katılmak istiyorum.
-                        </p>
-                        <Link to="/add-trainer" className="btn-red" style={{ display: 'inline-block', width: '100%' }}>
-                            EĞİTMEN BAŞVURUSU
-                        </Link>
-                    </div>
-                </div>
-
+            {/* Karartma Katmanı */}
+            <div style={styles.overlay}></div>
+            
+            {/* Yazılar */}
+            <div style={styles.content}>
+              <h3 style={styles.cardTitle}>SPORCUYUM</h3>
+              <p style={styles.cardText}>Antrenman yapmak ve derslere katılmak istiyorum.</p>
             </div>
-        </div>
-    );
+          </div>
+        </Link>
+
+        {/* --- EĞİTMEN KARTI (SİYAH TASARIM) --- */}
+        <Link to="/add-trainer" style={styles.cardLink}>
+          <div style={styles.card}>
+            {/* Arka Plan Resmi */}
+            <div style={{
+              ...styles.bgImage, 
+              backgroundImage: 'url("https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=1000")'
+            }}></div>
+            
+            {/* Karartma Katmanı */}
+            <div style={styles.overlay}></div>
+            
+            {/* Yazılar */}
+            <div style={styles.content}>
+              <h3 style={styles.cardTitle}>EĞİTMENİM</h3>
+              <p style={styles.cardText}>Ders vermek ve öğrencileri yönetmek istiyorum.</p>
+            </div>
+          </div>
+        </Link>
+
+      </div>
+
+      <div style={{ marginTop: '30px', fontSize: '15px' }}>
+        Hesabın var mı? <Link to="/login" style={{ color: '#D31145', fontWeight: 'bold', textDecoration:'none' }}>Giriş Yap</Link>
+      </div>
+    </div>
+  );
+};
+
+// --- MODERN CSS STİLLERİ (JavaScript Objesi Olarak) ---
+const styles = {
+  container: {
+    padding: '80px 20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '80vh',
+    textAlign: 'center'
+  },
+  heading: {
+    fontFamily: 'Oswald',
+    fontSize: '32px',
+    marginBottom: '40px',
+    textTransform: 'uppercase',
+    color: '#333'
+  },
+  cardsWrapper: {
+    display: 'flex',
+    gap: '30px',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
+  },
+  cardLink: {
+    textDecoration: 'none',
+    color: 'white'
+  },
+  card: {
+    width: '300px',
+    height: '400px',
+    borderRadius: '20px',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+    transition: 'transform 0.3s ease',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    zIndex: 1
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3))', // Siyah karartma efekti
+    zIndex: 2
+  },
+  content: {
+    position: 'relative',
+    zIndex: 3,
+    padding: '20px',
+    textAlign: 'center'
+  },
+  cardTitle: {
+    fontFamily: 'Oswald',
+    fontSize: '32px',
+    marginBottom: '10px',
+    textTransform: 'uppercase',
+    color: 'white'
+  },
+  cardText: {
+    fontSize: '16px',
+    opacity: 0.9,
+    fontWeight: '300',
+    color: '#eee'
+  }
 };
 
 export default RoleSelection;

@@ -1,139 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { getTrainers, deleteTrainer } from '../api/api';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/api'; 
 
 const AdminDashboard = () => {
-    const [trainers, setTrainers] = useState([]);
-    
-    // Proje Teklifi Madde 5: "Aggregation query for class popularity statistics"
-    // Bu veriler normalde backend'deki aggregation sorgusundan gelecek.
-    const mockStats = {
-        totalMembers: 142,
-        totalTrainers: 8,
-        activeClasses: 12,
-        classPopularity: [
-            { name: 'Fitness', count: 45, percent: 90 }, // %90 Dolu
-            { name: 'Yoga', count: 30, percent: 60 },     // %60 Dolu
-            { name: 'Pilates', count: 25, percent: 50 },
-            { name: 'Boxing', count: 10, percent: 20 },
-        ]
-    };
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([]);
+    const [courses, setCourses] = useState([]); // Yeni: Dersler State'i
 
     useEffect(() => {
-        loadTrainers();
-    }, []);
+        // 1. GÜVENLİK KONTROLÜ
+        const role = localStorage.getItem('role');
+        if (role !== 'admin') {
+            alert('Bu sayfaya erişim yetkiniz yok!');
+            navigate('/'); 
+            return;
+        }
 
-    const loadTrainers = async () => {
+        // 2. TÜM VERİLERİ ÇEK (Kullanıcılar + Dersler)
+        fetchAllData();
+    }, [navigate]);
+
+    const fetchAllData = async () => {
         try {
-            const res = await getTrainers();
-            setTrainers(res.data);
+            // Kullanıcıları Çek
+            const usersRes = await api.get('/users');
+            setUsers(usersRes.data);
+
+            // Dersleri Çek
+            const coursesRes = await api.get('/courses');
+            setCourses(coursesRes.data);
+
         } catch (error) {
-            // Mock Data
-            setTrainers([
-                { _id: 1, name: 'Sarah Connor', expertise: 'Yoga' },
-                { _id: 2, name: 'John Rambo', expertise: 'Fitness' },
-                { _id: 3, name: 'Rocky Balboa', expertise: 'Boxing' },
-            ]);
+            console.error('Veri çekme hatası:', error);
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Bu eğitmeni silmek istediğinize emin misiniz?')) {
+    // KULLANICI SİLME
+    const handleDeleteUser = async (id) => {
+        if (window.confirm('Bu kullanıcıyı silmek istediğine emin misin?')) {
             try {
-                await deleteTrainer(id);
-                setTrainers(trainers.filter(t => t._id !== id)); 
+                await api.delete(`/users/${id}`);
+                fetchAllData(); // Listeyi yenile
+                alert('Kullanıcı silindi.');
             } catch (error) {
-                alert('Silme işlemi başarısız (Mock modunda sadece listeden kalkar)');
-                setTrainers(trainers.filter(t => t._id !== id));
+                alert('Silme başarısız.');
             }
         }
     };
 
+    // DERS SİLME (YENİ)
+    const handleDeleteCourse = async (id) => {
+        if (window.confirm('Bu dersi ve içindeki kayıtları silmek istediğine emin misin?')) {
+            try {
+                await api.delete(`/courses/${id}`);
+                fetchAllData(); // Listeyi yenile
+                alert('Ders başarıyla silindi.');
+            } catch (error) {
+                alert('Ders silinemedi.');
+            }
+        }
+    };
+
+    // Listeleri Filtrele
+    const athletes = users.filter(user => user.role === 'user' || user.role === 'member');
+    const trainers = users.filter(user => user.role === 'trainer');
+
+    // Tarih Formatlayıcı
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('tr-TR', {
+            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+    };
+
     return (
-        <div className="container" style={{ padding: '40px 20px' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h1 className="page-title" style={{ margin: 0 }}>YÖNETİM PANELİ</h1>
-                <Link to="/add-trainer" className="btn-red">
-                    + YENİ EĞİTMEN EKLE
-                </Link>
-            </div>
+        <div className="container" style={{ padding: '80px 20px', minHeight: '80vh' }}>
+            <h1 style={{ textAlign: 'center', marginBottom: '40px', fontFamily: 'Oswald' }}>YÖNETİM PANELİ</h1>
 
-            {/* --- BÖLÜM 1: İSTATİSTİK KARTLARI (KPIs) --- */}
-            <div className="dashboard-grid">
-                <div className="stat-card">
-                    <h3>TOPLAM ÜYE</h3>
-                    <div className="stat-number">{mockStats.totalMembers}</div>
-                </div>
-                <div className="stat-card">
-                    <h3>AKTİF DERSLER</h3>
-                    <div className="stat-number">{mockStats.activeClasses}</div>
-                </div>
-                <div className="stat-card">
-                    <h3>EĞİTMEN SAYISI</h3>
-                    <div className="stat-number">{trainers.length}</div>
-                </div>
-            </div>
-
-            {/* --- BÖLÜM 2: DERS DOLULUK ORANLARI (Aggregation Query Görselleştirme) --- */}
-            <div className="chart-container" style={{ margin: '40px 0' }}>
-                <h2 style={{ fontFamily: 'Oswald, sans-serif', marginBottom: '20px' }}>DERS POPÜLERLİK ANALİZİ</h2>
-                <div style={{ background: '#fff', padding: '20px', border: '1px solid #eee', borderRadius: '8px' }}>
-                    {mockStats.classPopularity.map((item, index) => (
-                        <div key={index} style={{ marginBottom: '15px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontWeight: 'bold' }}>
-                                <span>{item.name}</span>
-                                <span>{item.percent}% Doluluk</span>
-                            </div>
-                            <div style={{ width: '100%', height: '10px', background: '#f0f0f0', borderRadius: '5px' }}>
-                                <div style={{ 
-                                    width: `${item.percent}%`, 
-                                    height: '100%', 
-                                    background: item.percent > 80 ? '#D31145' : '#333', // Çok doluysa kırmızı
-                                    borderRadius: '5px' 
-                                }}></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* --- BÖLÜM 3: EĞİTMEN YÖNETİM TABLOSU (CRUD) --- */}
-            <h2 style={{ fontFamily: 'Oswald, sans-serif', marginBottom: '20px' }}>EĞİTMEN LİSTESİ</h2>
-            <div style={{ overflowX: 'auto' }}>
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>EĞİTMEN ADI</th>
-                            <th>UZMANLIK</th>
-                            <th>DURUM</th>
-                            <th>İŞLEMLER</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {trainers.map(t => (
-                            <tr key={t._id}>
-                                <td style={{ fontWeight: 'bold' }}>{t.name}</td>
-                                <td>{t.expertise}</td>
-                                <td><span style={{ color: 'green', fontWeight: 'bold' }}>Aktif</span></td>
-                                <td>
-                                    <button 
-                                        onClick={() => handleDelete(t._id)}
-                                        style={{ 
-                                            background: '#333', color: 'white', border: 'none', 
-                                            padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' 
-                                        }}
-                                    >
-                                        SİL
-                                    </button>
-                                </td>
+            {/* --- BÖLÜM 1: AKTİF DERSLER (YENİ) --- */}
+            <div style={styles.section}>
+                <h2 style={{ color: '#28a745', marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom:'10px' }}>
+                    AKTİF DERS PROGRAMI <span style={{fontSize:'16px', color:'#666'}}>({courses.length})</span>
+                </h2>
+                {courses.length > 0 ? (
+                    <table style={styles.table}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                <th style={styles.th}>Ders Adı</th>
+                                <th style={styles.th}>Eğitmen</th>
+                                <th style={styles.th}>Tarih</th>
+                                <th style={styles.th}>Doluluk</th>
+                                <th style={styles.th}>İşlem</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {courses.map(course => (
+                                <tr key={course._id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={styles.td}><strong>{course.type}</strong></td>
+                                    <td style={styles.td}>{course.trainerName}</td>
+                                    <td style={styles.td}>{formatDate(course.date)}</td>
+                                    <td style={styles.td}>
+                                        <span style={{
+                                            background: course.participants.length >= course.quota ? '#ffd2d2' : '#d2ffd2',
+                                            padding: '3px 8px', borderRadius: '5px', fontSize:'12px', fontWeight:'bold'
+                                        }}>
+                                            {course.participants.length} / {course.quota}
+                                        </span>
+                                    </td>
+                                    <td style={styles.td}>
+                                        <button onClick={() => handleDeleteCourse(course._id)} style={styles.deleteBtn}>SİL</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p style={{color:'#999'}}>Henüz eklenmiş bir ders yok.</p>
+                )}
+            </div>
+
+            {/* --- BÖLÜM 2: EĞİTMENLER --- */}
+            <div style={styles.section}>
+                <h2 style={{ color: '#D31145', marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom:'10px' }}>
+                    EĞİTMEN LİSTESİ <span style={{fontSize:'16px', color:'#666'}}>({trainers.length})</span>
+                </h2>
+                {trainers.length > 0 ? (
+                    <table style={styles.table}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                <th style={styles.th}>Kullanıcı Adı</th>
+                                <th style={styles.th}>Uzmanlık</th>
+                                <th style={styles.th}>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {trainers.map(trainer => (
+                                <tr key={trainer._id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={styles.td}><strong>{trainer.username}</strong></td>
+                                    <td style={styles.td}>
+                                        <span style={{background:'#eee', padding:'2px 8px', borderRadius:'5px', fontSize:'13px'}}>
+                                            {trainer.expertise || 'Genel'}
+                                        </span>
+                                    </td>
+                                    <td style={styles.td}>
+                                        <button onClick={() => handleDeleteUser(trainer._id)} style={styles.deleteBtn}>SİL</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p style={{color:'#999'}}>Henüz kayıtlı eğitmen yok.</p>
+                )}
+            </div>
+
+            {/* --- BÖLÜM 3: SPORCULAR --- */}
+            <div style={styles.section}>
+                <h2 style={{ color: '#333', marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom:'10px' }}>
+                    SPORCU LİSTESİ <span style={{fontSize:'16px', color:'#666'}}>({athletes.length})</span>
+                </h2>
+                {athletes.length > 0 ? (
+                    <table style={styles.table}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                <th style={styles.th}>Kullanıcı Adı</th>
+                                <th style={styles.th}>Rol</th>
+                                <th style={styles.th}>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {athletes.map(athlete => (
+                                <tr key={athlete._id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={styles.td}><strong>{athlete.username}</strong></td>
+                                    <td style={{ ...styles.td, color: '#666' }}>Üye</td>
+                                    <td style={styles.td}>
+                                        <button onClick={() => handleDeleteUser(athlete._id)} style={styles.deleteBtn}>SİL</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p style={{color:'#999'}}>Henüz kayıtlı sporcu yok.</p>
+                )}
             </div>
         </div>
     );
+};
+
+const styles = {
+    section: { marginBottom: '50px', backgroundColor: 'white', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' },
+    table: { width: '100%', borderCollapse: 'collapse', marginTop: '10px' },
+    th: { padding: '15px', textAlign: 'left', color: '#555', fontWeight: 'bold', fontSize:'14px' },
+    td: { padding: '15px', textAlign: 'left', verticalAlign: 'middle', fontSize:'14px' },
+    deleteBtn: { backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight:'bold', fontSize:'12px' }
 };
 
 export default AdminDashboard;
