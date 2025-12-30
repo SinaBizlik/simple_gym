@@ -31,22 +31,19 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// GİRİŞ YAP (Login) - SORUNLU KISIM BURASIYDI, DÜZELTİLDİ ✅
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
         console.log("--- GİRİŞ İSTEĞİ GELDİ ---");
         console.log("Aranan Kullanıcı:", username);
-
-        // 1. Kullanıcıyı Bul
+        
         const user = await User.findOne({ username });
         if (!user) {
             console.log("❌ Kullanıcı Bulunamadı!");
             return res.status(400).json({ error: "Kullanıcı adı hatalı" });
         }
 
-        // 2. Şifreyi Kontrol Et
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             console.log("❌ Şifre Yanlış!");
@@ -55,10 +52,8 @@ router.post('/login', async (req, res) => {
 
         console.log("✅ Giriş Başarılı! Token üretiliyor...");
 
-        // 3. Token Oluştur
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // 4. CEVABI GÖNDER (İşte burası eksikti veya çalışmıyordu)
         res.json({
             token,
             role: user.role,
