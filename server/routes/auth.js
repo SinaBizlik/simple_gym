@@ -3,19 +3,15 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// KAYIT OL (Register)
 router.post('/register', async (req, res) => {
     try {
         const { username, password, role, expertise } = req.body;
         
-        // Kullanıcı zaten var mı?
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış." });
 
-        // Şifrele
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Yeni kullanıcı oluştur
+AJAX
         const newUser = new User({
             username,
             password: hashedPassword,
@@ -37,7 +33,7 @@ router.post('/login', async (req, res) => {
     try {
         console.log("--- GİRİŞ İSTEĞİ GELDİ ---");
         console.log("Aranan Kullanıcı:", username);
-        
+
         const user = await User.findOne({ username });
         if (!user) {
             console.log("❌ Kullanıcı Bulunamadı!");

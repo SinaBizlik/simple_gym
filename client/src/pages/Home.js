@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/api';
+import CourseCalendar from '../components/CourseCalendar'; // Takvim bileşenini dahil ettik
 
 const Home = () => {
   const [courses, setCourses] = useState([]);
+  const [activeFilter, setActiveFilter] = useState('all'); // Aktif filtre durumu
   const userRole = localStorage.getItem('role'); 
-  const currentUserId = localStorage.getItem('userId'); // Giriş yapan kişi
+  const currentUserId = localStorage.getItem('userId');
 
-  // Dersleri Çek
-  const fetchCourses = async () => {
+  // Sayfa açılınca çalışır
+  useEffect(() => {
+    fetchCourses('all'); 
+  }, []);
+
+  // DERSLERİ ÇEK (Filtreleme özellikli)
+  const fetchCourses = async (type) => {
     try {
-      const res = await api.get('/courses');
+      setActiveFilter(type); // Buton rengi için state güncelle
+      
+      // Eğer 'all' ise parametre gönderme, değilse ?type=yoga şeklinde gönder
+      const endpoint = type === 'all' ? '/courses' : `/courses?type=${type}`;
+      
+      const res = await api.get(endpoint);
       setCourses(res.data);
     } catch (err) {
       console.error(err);
     }
   };
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
 
   // DERSE KATILMA FONKSİYONU
   const handleJoin = async (courseId) => {
@@ -31,7 +39,7 @@ const Home = () => {
     try {
         await api.post(`/courses/${courseId}/join`, { userId: currentUserId });
         alert("Kaydınız başarıyla alındı!");
-        fetchCourses(); // Sayfayı yenilemeden verileri güncelle (Bar artsın)
+        fetchCourses(activeFilter); // Mevcut filtreyi bozmadan sayfayı yenile (Bar artsın)
     } catch (error) {
         alert(error.response?.data?.error || "Bir hata oluştu");
     }
@@ -44,7 +52,7 @@ const Home = () => {
 
   return (
     <div>
-      {/* HERO SECTION AYNI KALSIN... */}
+      {/* HERO SECTION (Banner) */}
       <div style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=1920")', height: '500px', backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white', textAlign: 'center', boxShadow: 'inset 0 0 0 2000px rgba(0, 0, 0, 0.5)' }}>
         <h1 style={{ fontFamily: 'Oswald', fontSize: '60px', marginBottom: '10px', color: 'white' }}>HEDEFİN SENİNLE BAŞLAR</h1>
         <p style={{ fontSize: '18px', maxWidth: '600px', marginBottom: '30px' }}>Türkiye'nin en deneyimli eğitmenleri ile Simple Gym'i keşfet.</p>
@@ -52,10 +60,47 @@ const Home = () => {
       </div>
 
       <div className="container" style={{ padding: '50px 20px' }}>
-        <h2 style={{ fontFamily: 'Oswald', borderLeft: '5px solid #D31145', paddingLeft: '15px', marginBottom: '40px' }}>HAFTALIK DERS PROGRAMI</h2>
+        
+        {/* --- ÜST KISIM: BAŞLIK VE FİLTRELER --- */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '40px', flexWrap:'wrap', gap:'20px' }}>
+            <h2 style={{ fontFamily: 'Oswald', borderLeft: '5px solid #D31145', paddingLeft: '15px', margin:0 }}>
+            HAFTALIK DERS PROGRAMI
+            </h2>
 
+            {/* FİLTRE BUTONLARI */}
+            <div style={{ display:'flex', gap:'10px' }}>
+                {['all', 'fitness', 'yoga', 'pilates', 'boks'].map((cat) => (
+                    <button 
+                        key={cat}
+                        onClick={() => fetchCourses(cat)}
+                        style={{
+                            padding: '8px 20px',
+                            border: '2px solid #D31145',
+                            borderRadius: '20px',
+                            background: activeFilter === cat ? '#D31145' : 'transparent',
+                            color: activeFilter === cat ? 'white' : '#D31145',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            transition: 'all 0.3s'
+                        }}
+                    >
+                        {cat === 'all' ? 'TÜMÜ' : cat}
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        {/* --- YENİ EKLENEN TAKVİM BİLEŞENİ --- */}
+        <div style={{ marginBottom: '50px' }}>
+            <h3 style={{ fontFamily: 'Oswald', color: '#555', marginBottom: '15px', fontSize:'20px' }}>DERS TAKVİMİ</h3>
+            {/* Backend'den gelen dersleri takvime gönderiyoruz */}
+            <CourseCalendar courses={courses} />
+        </div>
+
+        {/* --- DERS KARTLARI LİSTESİ --- */}
         {courses.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#999' }}>Planlanmış ders yok.</div>
+          <div style={{ textAlign: 'center', color: '#999', padding:'30px' }}>Bu kategoride planlanmış ders yok.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
             {courses.map((course) => {

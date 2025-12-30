@@ -52,6 +52,12 @@ const seedUsers = async () => {
                 username: 'SporcuAyse',
                 password: hashedPassword,
                 role: 'user'
+            },
+            {
+                username: 'Pilates',
+                password: hashedPassword,
+                role: 'trainer',
+                expertise: 'Pilates'
             }
         ];
 
