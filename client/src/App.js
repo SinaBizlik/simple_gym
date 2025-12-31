@@ -14,6 +14,7 @@ import AddCourse from './pages/AddCourse';
 import MemberRequest from './pages/MemberRequest';
 import TrainerRequests from './pages/TrainerRequests';
 import MyRequests from './pages/MyRequests';
+import Profile from './pages/Profiles';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/request" element={<MemberRequest />} />
           <Route path="/trainer-requests" element={<TrainerRequests />} />
           <Route path="/my-requests" element={<MyRequests />} />
+          <Route path="/profile" element={<Profile />} />
           
           {/* 👇 2. EKLEME: Bu satırı ekleyerek sayfayı aktif ettik */}
           <Route path="/add-course" element={<AddCourse />} />

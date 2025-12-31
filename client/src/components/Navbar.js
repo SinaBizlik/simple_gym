@@ -11,10 +11,12 @@ const Navbar = () => {
 
   // Çıkış Yapma Fonksiyonu
   const handleLogout = () => {
-    localStorage.clear(); // Tüm verileri temizle
-    alert('Başarıyla çıkış yapıldı.');
-    navigate('/login');
-    window.location.reload(); // Navbar'ın güncellenmesi için sayfayı yenile
+    if(window.confirm("Çıkış yapmak istediğine emin misin?")) {
+        localStorage.clear(); // Tüm verileri temizle
+        alert('Başarıyla çıkış yapıldı.');
+        navigate('/login');
+        window.location.reload(); // Navbar'ın güncellenmesi için sayfayı yenile
+    }
   };
 
   return (
@@ -29,49 +31,41 @@ const Navbar = () => {
         <ul className="nav-links">
           <li><Link to="/">ANA SAYFA</Link></li>
           
-          {/* HERKESİN GÖREBİLECEĞİ ORTAK SAYFALAR */}
           {!role && <li><Link to="/contact">İLETİŞİM</Link></li>}
 
-          {/* --- ADMIN ÖZEL --- */}
           {role === 'admin' && (
             <li><Link to="/admin" style={{ color: '#D31145', fontWeight: 'bold' }}>YÖNETİCİ PANELİ</Link></li>
           )}
 
-          {/* --- HOCA (TRAINER) ÖZEL --- */}
           {role === 'trainer' && (
             <>
               <li><Link to="/add-course">DERS EKLE</Link></li>
-              <li>
-                <Link to="/trainer-requests" style={{ color: '#ffc107', fontWeight: 'bold' }}>
-                  TALEPLER
-                </Link>
-              </li>
+              <li><Link to="/trainer-requests" style={{ color: '#ffc107', fontWeight: 'bold' }}>TALEPLER</Link></li>
             </>
           )}
 
           {(role === 'member' || role === 'user') && (
             <>
-                <li>
-                    <Link to="/request" style={{ color: '#333', fontWeight: 'bold' }}>
-                        DERS İSTE
-                    </Link>
-                </li>
-                <li>
-                    <Link to="/my-requests" style={{ color: '#D31145', fontWeight: 'bold' }}>
-                        TALEPLERİM
-                    </Link>
-                </li>
+                <li><Link to="/request" style={{ color: '#333', fontWeight: 'bold' }}>DERS İSTE</Link></li>
+                <li><Link to="/my-requests" style={{ color: '#D31145', fontWeight: 'bold' }}>TALEPLERİM</Link></li>
+                {/* Menüdeki Vücut Analizi linki de kalabilir, istersen silebilirsin */}
+                <li><Link to="/profile" style={{ color: '#28a745', fontWeight: 'bold' }}>VÜCUT ANALİZİ 📈</Link></li>
             </>
           )}
         </ul>
 
-        {/* SAĞ TARAFTAKİ BUTONLAR (Giriş/Çıkış) */}
+        {/* SAĞ TARAFTAKİ BUTONLAR */}
         <div className="auth-buttons">
           {token ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
-                {username?.toUpperCase()} <small style={{color:'#666', fontWeight:'normal'}}>({role})</small>
-              </span>
+              
+              {/* 👇 DEĞİŞİKLİK BURADA: İSİM ALANI TIKLANABİLİR YAPILDI 👇 */}
+              <Link to="/profile" style={{ textDecoration: 'none', cursor: 'pointer' }} title="Profilime Git">
+                  <span className="username-hover" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
+                    {username?.toUpperCase()} <small style={{color:'#666', fontWeight:'normal'}}>({role})</small>
+                  </span>
+              </Link>
+
               <button onClick={handleLogout} className="btn-outline">
                 ÇIKIŞ YAP
               </button>
@@ -133,6 +127,13 @@ const Navbar = () => {
         .nav-links li a:hover {
           color: #D31145;
         }
+        
+        /* Kullanıcı adı üzerine gelince efekt */
+        .username-hover:hover {
+            color: #D31145 !important;
+            text-decoration: underline;
+        }
+
         .btn-red {
           background-color: #D31145;
           color: white;
